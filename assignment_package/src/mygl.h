@@ -6,6 +6,8 @@
 #include <shaderprogram.h>
 #include <scene/squareplane.h>
 #include "camera.h"
+#include <scene/mesh.h>
+#include <scene/componentdisplay.h>
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
@@ -33,23 +35,44 @@ private:
     // in the scene.
     glm::vec2 m_mousePosPrev;
 
+    VertexDisplay m_vertexDisplay;
+    HalfEdgeDisplay m_halfEdgeDisplay;
+    FaceDisplay m_faceDisplay;
+    bool meshDirty;
+    bool selectionDirty;
+
 
 public:
+    Mesh mesh;
+    Vertex *selectedVertex;
+    HalfEdge *selectedHalfEdge;
+    Face *selectedFace;
+
+    void selectVertex(Vertex *vertex);
+    void selectHalfEdge(HalfEdge *edge);
+    void selectFace(Face *face);
+    void setVertexPosition(const glm::vec3 &position);
+    void setFaceColor(const glm::vec3 &color);
+
     explicit MyGL(QWidget *parent = nullptr);
     ~MyGL();
 
     void initializeGL();
     void resizeGL(int w, int h);
     void paintGL();
+    bool loadOBJ(const QString &filename);
 
 protected:
     void keyPressEvent(QKeyEvent *e);
     void mousePressEvent(QMouseEvent *e);
     void mouseMoveEvent(QMouseEvent *e);
     void wheelEvent(QWheelEvent *e);
-
+    
 public slots:
     void tick();
+
+signals:
+    void selectionChanged();
 };
 
 

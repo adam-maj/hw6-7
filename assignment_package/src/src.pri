@@ -23,3 +23,18 @@ HEADERS += \
     $$PWD/camera.h \
     $$PWD/openglcontext.h \
     $$PWD/scene/squareplane.h
+
+SOURCES += $$PWD/scene/vertex.cpp
+HEADERS += $$PWD/scene/vertex.h
+
+SOURCES += $$PWD/scene/face.cpp
+HEADERS += $$PWD/scene/face.h
+
+SOURCES += $$PWD/scene/halfedge.cpp
+HEADERS += $$PWD/scene/halfedge.h
+
+SOURCES += $$PWD/scene/mesh.cpp
+HEADERS += $$PWD/scene/mesh.h
+
+SOURCES += $$PWD/scene/componentdisplay.cpp
+HEADERS += $$PWD/scene/componentdisplay.h

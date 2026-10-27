@@ -15,14 +15,20 @@ void Drawable::destroyGPUData() {
     for(auto &kvp : bufferHandles) {
         glContext->glDeleteBuffers(1, &kvp.second);
     }
+
     indexBufferLength = 0;
+    bufferHandles.clear();
 }
 
-GLenum Drawable::drawMode() {
+GLenum Drawable::drawMode() const {
     return GL_TRIANGLES;
 }
 
 void Drawable::generateBuffer(BufferType t) {
+    if(hasBuffer(t)) {
+        return;
+    }
+
     bufferHandles[t] = 0; // placeholder, just inserts a kvp into the map
     glContext->glGenBuffers(1, &(bufferHandles.at(t)));
 }

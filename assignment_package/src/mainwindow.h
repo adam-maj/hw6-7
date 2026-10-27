@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QListWidgetItem>
 
 
 namespace Ui {
@@ -19,9 +20,18 @@ public:
 
 private slots:
     void on_actionQuit_triggered();
+    void on_loadOBJButton_clicked();
+    void selectVertex(QListWidgetItem *item);
+    void selectHalfEdge(QListWidgetItem *item);
+    void selectFace(QListWidgetItem *item);
+    void updateSelection();
+    void updateVertexPosition();
+    void updateFaceColor();
 
 private:
     Ui::MainWindow *ui;
+    void clearLists();
+    void fillLists();
 };
 
 

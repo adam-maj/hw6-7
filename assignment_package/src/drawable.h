@@ -37,7 +37,7 @@ public:
     // tells glDrawElements what kind of primitives to
     // draw. The default implementation returns GL_TRIANGLES.
     // You can write subclasses that return GL_LINES or GL_POINTS.
-    virtual GLenum drawMode();
+    virtual GLenum drawMode() const;
 
     void generateBuffer(BufferType t);
     void bindBuffer(BufferType t);

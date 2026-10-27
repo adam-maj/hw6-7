@@ -11,21 +11,39 @@ MyGL::MyGL(QWidget *parent)
       timer(), currTime(0.),
       m_geomSquare(this),
       m_progLambert(this), m_progFlat(this),
-      vao(),
+      vao(0),
       m_camera(width(), height()),
-      m_mousePosPrev()
+      m_mousePosPrev(),
+      m_vertexDisplay(this),
+      m_halfEdgeDisplay(this),
+      m_faceDisplay(this),
+      meshDirty(true),
+      selectionDirty(true),
+      mesh(this),
+      selectedVertex(nullptr),
+      selectedHalfEdge(nullptr),
+      selectedFace(nullptr)
 {
     setFocusPolicy(Qt::StrongFocus);
 
     connect(&timer, SIGNAL(timeout()), this, SLOT(tick()));
     // Tell the timer to redraw 60 times per second
     timer.start(16);
+
+    mesh.createCube();
 }
 
 MyGL::~MyGL()
 {
     makeCurrent();
-    glDeleteVertexArrays(1, &vao);
+    mesh.destroyGPUData();
+    m_vertexDisplay.destroyGPUData();
+    m_halfEdgeDisplay.destroyGPUData();
+    m_faceDisplay.destroyGPUData();
+    if(vao != 0) {
+        glDeleteVertexArrays(1, &vao);
+    }
+    doneCurrent();
 }
 
 void MyGL::initializeGL()
@@ -84,8 +102,25 @@ void MyGL::resizeGL(int w, int h)
 //For example, when the function update() is called, paintGL is called implicitly.
 void MyGL::paintGL()
 {
+    glBindVertexArray(vao);
+
     // Clear the screen so that we only see newly drawn images
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if(meshDirty) {
+        mesh.initializeAndBufferGeometryData();
+        meshDirty = false;
+    }
+
+    if(selectionDirty) {
+        m_vertexDisplay.vertex = selectedVertex;
+        m_halfEdgeDisplay.edge = selectedHalfEdge;
+        m_faceDisplay.face = selectedFace;
+        m_vertexDisplay.initializeAndBufferGeometryData();
+        m_halfEdgeDisplay.initializeAndBufferGeometryData();
+        m_faceDisplay.initializeAndBufferGeometryData();
+        selectionDirty = false;
+    }
 
     glm::mat4 viewproj = m_camera.getViewProj();
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
@@ -93,27 +128,49 @@ void MyGL::paintGL()
     m_progLambert.setUnifVec3("u_CamPos", m_camera.eye);
     m_progFlat.setUnifMat4("u_Model", glm::mat4(1.f));
 
-    //Create a model matrix. This one rotates the square by PI/4 radians then translates it by <-2,0,0>.
-    //Note that we have to transpose the model matrix before passing it to the shader
-    //This is because OpenGL expects column-major matrices, but you've
-    //implemented row-major matrices.
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(-2,0,0)) * glm::rotate(glm::mat4(), 0.25f * 3.14159f, glm::vec3(0,1,0));
-    //Send the geometry's transformation matrix to the shader
-    m_progLambert.setUnifMat4("u_Model", model);
-    m_progLambert.setUnifMat4("u_ModelInvTr", glm::inverse(glm::transpose(model)));
-    //Draw the example sphere using our lambert shader
-    m_progLambert.draw(m_geomSquare);
+    m_progLambert.setUnifMat4("u_Model", glm::mat4(1.f));
+    m_progLambert.setUnifMat4("u_ModelInvTr", glm::mat4(1.f));
 
-    //Now do the same to render the cylinder
-    //We've rotated it -45 degrees on the Z axis, then translated it to the point <2,2,0>
-    model = glm::translate(glm::mat4(1.0f), glm::vec3(2,2,0)) * glm::rotate(glm::mat4(1.0f), glm::radians(-45.0f), glm::vec3(0,0,1));
-    m_progLambert.setUnifMat4("u_Model", model);
-    m_progLambert.setUnifMat4("u_ModelInvTr", glm::inverse(glm::transpose(model)));
-    m_progLambert.draw(m_geomSquare);
+    glEnable(GL_DEPTH_TEST);
+    m_progLambert.draw(mesh);
+
+    glDisable(GL_DEPTH_TEST);
+    if(selectedFace) {
+        m_progFlat.draw(m_faceDisplay);
+    }
+
+    if(selectedHalfEdge) {
+        m_progFlat.draw(m_halfEdgeDisplay);
+    }
+
+    if(selectedVertex) {
+        m_progFlat.draw(m_vertexDisplay);
+    }
+
+    glEnable(GL_DEPTH_TEST);
 }
 
-void MyGL::keyPressEvent(QKeyEvent *e) {
-    ;
+void MyGL::keyPressEvent(QKeyEvent *e)
+{
+    if(e->key() == Qt::Key_N && selectedHalfEdge) {
+        selectHalfEdge(selectedHalfEdge->next);
+    } else if(e->key() == Qt::Key_M && selectedHalfEdge) {
+        selectHalfEdge(selectedHalfEdge->sym);
+    } else if(e->key() == Qt::Key_F && selectedHalfEdge) {
+        selectFace(selectedHalfEdge->face);
+    } else if(e->key() == Qt::Key_V && selectedHalfEdge) {
+        selectVertex(selectedHalfEdge->vertex);
+    } else if(e->key() == Qt::Key_H) {
+        if(e->modifiers() & Qt::ShiftModifier) {
+            if(selectedFace) {
+                selectHalfEdge(selectedFace->edge);
+            }
+        } else if(selectedVertex) {
+            selectHalfEdge(selectedVertex->edge);
+        }
+    } else {
+        OpenGLContext::keyPressEvent(e);
+    }
 }
 
 void MyGL::mousePressEvent(QMouseEvent *e) {
@@ -141,13 +198,77 @@ void MyGL::mouseMoveEvent(QMouseEvent *e) {
         m_camera.PanAlongRight(-diff.x);
         m_camera.PanAlongUp(diff.y);
     }
+    update();
 }
 
 void MyGL::wheelEvent(QWheelEvent *e) {
     m_camera.Zoom(e->angleDelta().y() * 0.001f);
+    update();
 }
 
 void MyGL::tick() {
     ++currTime;
     update();
+}
+
+bool MyGL::loadOBJ(const QString &filename)
+{
+    if(!mesh.loadOBJ(filename)) {
+        return false;
+    }
+    selectedVertex = nullptr;
+    selectedHalfEdge = nullptr;
+    selectedFace = nullptr;
+    meshDirty = true;
+    selectionDirty = true;
+    emit selectionChanged();
+    update();
+    return true;
+}
+
+void MyGL::selectVertex(Vertex *vertex)
+{
+    selectedVertex = vertex;
+    selectionDirty = true;
+    emit selectionChanged();
+    setFocus();
+    update();
+}
+
+void MyGL::selectHalfEdge(HalfEdge *edge)
+{
+    selectedHalfEdge = edge;
+    selectionDirty = true;
+    emit selectionChanged();
+    setFocus();
+    update();
+}
+
+void MyGL::selectFace(Face *face)
+{
+    selectedFace = face;
+    selectionDirty = true;
+    emit selectionChanged();
+    setFocus();
+    update();
+}
+
+void MyGL::setVertexPosition(const glm::vec3 &position)
+{
+    if(selectedVertex) {
+        selectedVertex->position = position;
+        meshDirty = true;
+        selectionDirty = true;
+        update();
+    }
+}
+
+void MyGL::setFaceColor(const glm::vec3 &color)
+{
+    if(selectedFace) {
+        selectedFace->color = color;
+        meshDirty = true;
+        selectionDirty = true;
+        update();
+    }
 }

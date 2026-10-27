@@ -14,6 +14,19 @@
    <string>OpenGLDemo</string>
   </property>
   <widget class="QWidget" name="centralWidget">
+   <widget class="QPushButton" name="loadOBJButton">
+    <property name="geometry">
+    <rect>
+    <x>640</x>
+    <y>415</y>
+    <width>111</width>
+    <height>28</height>
+    </rect>
+    </property>
+    <property name="text">
+    <string>Load OBJ</string>
+    </property>
+   </widget> 
    <widget class="MyGL" name="mygl">
     <property name="geometry">
      <rect>
