@@ -272,3 +272,11 @@ void MyGL::setFaceColor(const glm::vec3 &color)
         update();
     }
 }
+
+void MyGL::refreshMesh()
+{
+    meshDirty = true;
+    selectionDirty = true;
+    emit selectionChanged();
+    update();
+}

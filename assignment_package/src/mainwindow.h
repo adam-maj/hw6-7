@@ -21,6 +21,10 @@ public:
 private slots:
     void on_actionQuit_triggered();
     void on_loadOBJButton_clicked();
+    void on_splitEdgeButton_clicked();
+    void on_triangulateButton_clicked();
+    void on_subdivideButton_clicked();
+    void on_extrudeButton_clicked();
     void selectVertex(QListWidgetItem *item);
     void selectHalfEdge(QListWidgetItem *item);
     void selectFace(QListWidgetItem *item);
@@ -32,6 +36,7 @@ private:
     Ui::MainWindow *ui;
     void clearLists();
     void fillLists();
+    void finishMeshEdit();
 };
 
 

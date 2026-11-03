@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1057</width>
-    <height>492</height>
+    <height>532</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,6 +27,30 @@
     <string>Load OBJ</string>
     </property>
    </widget> 
+   <widget class="QPushButton" name="splitEdgeButton">
+    <property name="geometry">
+    <rect><x>770</x><y>415</y><width>111</width><height>28</height></rect>
+    </property>
+    <property name="text"><string>Split Edge</string></property>
+   </widget>
+   <widget class="QPushButton" name="triangulateButton">
+    <property name="geometry">
+    <rect><x>900</x><y>415</y><width>111</width><height>28</height></rect>
+    </property>
+    <property name="text"><string>Triangulate</string></property>
+   </widget>
+   <widget class="QPushButton" name="subdivideButton">
+    <property name="geometry">
+    <rect><x>640</x><y>455</y><width>171</width><height>28</height></rect>
+    </property>
+    <property name="text"><string>Subdivide</string></property>
+   </widget>
+   <widget class="QPushButton" name="extrudeButton">
+    <property name="geometry">
+    <rect><x>840</x><y>455</y><width>171</width><height>28</height></rect>
+    </property>
+    <property name="text"><string>Extrude Face</string></property>
+   </widget>
    <widget class="MyGL" name="mygl">
     <property name="geometry">
      <rect>

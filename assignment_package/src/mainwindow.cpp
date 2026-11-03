@@ -26,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    clearLists();
     delete ui;
 }
 
@@ -55,33 +56,69 @@ void MainWindow::on_loadOBJButton_clicked()
     ui->mygl->setFocus();
 }
 
+void MainWindow::on_splitEdgeButton_clicked()
+{
+    if(!ui->mygl->selectedHalfEdge) {
+        return;
+    }
+
+    ui->mygl->mesh.splitEdge(ui->mygl->selectedHalfEdge);
+    finishMeshEdit();
+}
+
+void MainWindow::on_triangulateButton_clicked()
+{
+    if(!ui->mygl->selectedFace) {
+        return;
+    }
+
+    ui->mygl->mesh.triangulateFace(ui->mygl->selectedFace);
+    finishMeshEdit();
+}
+
+void MainWindow::on_subdivideButton_clicked()
+{
+    ui->mygl->mesh.subdivide();
+    finishMeshEdit();
+}
+
+void MainWindow::on_extrudeButton_clicked()
+{
+    if(!ui->mygl->selectedFace) {
+        return;
+    }
+    
+    ui->mygl->mesh.extrudeFace(ui->mygl->selectedFace);
+    finishMeshEdit();
+}
+
 void MainWindow::fillLists()
 {
-    for(const auto &vertex : ui->mygl->mesh.vertices) {
-        ui->vertsListWidget->addItem(vertex.get());
+    for(size_t i = ui->vertsListWidget->count(); i < ui->mygl->mesh.vertices.size(); ++i) {
+        ui->vertsListWidget->addItem(ui->mygl->mesh.vertices[i].get());
     }
 
-    for(const auto &edge : ui->mygl->mesh.halfEdges) {
-        ui->halfEdgesListWidget->addItem(edge.get());
+    for(size_t i = ui->halfEdgesListWidget->count(); i < ui->mygl->mesh.halfEdges.size(); ++i) {
+        ui->halfEdgesListWidget->addItem(ui->mygl->mesh.halfEdges[i].get());
     }
 
-    for(const auto &face : ui->mygl->mesh.faces) {
-        ui->facesListWidget->addItem(face.get());
+    for(size_t i = ui->facesListWidget->count(); i < ui->mygl->mesh.faces.size(); ++i) {
+        ui->facesListWidget->addItem(ui->mygl->mesh.faces[i].get());
     }
 }
 
 void MainWindow::clearLists()
 {
     while(ui->vertsListWidget->count() > 0) {
-        ui->vertsListWidget->takeItem(0);
+        ui->vertsListWidget->takeItem(ui->vertsListWidget->count() - 1);
     }
 
     while(ui->halfEdgesListWidget->count() > 0) {
-        ui->halfEdgesListWidget->takeItem(0);
+        ui->halfEdgesListWidget->takeItem(ui->halfEdgesListWidget->count() - 1);
     }
 
     while(ui->facesListWidget->count() > 0) {
-        ui->facesListWidget->takeItem(0);
+        ui->facesListWidget->takeItem(ui->facesListWidget->count() - 1);
     }
 }
 
@@ -165,4 +202,11 @@ void MainWindow::updateFaceColor()
         color.b = ui->faceBlueSpinBox->value();
     }
     ui->mygl->setFaceColor(color);
+}
+
+void MainWindow::finishMeshEdit()
+{
+    fillLists();
+    ui->mygl->refreshMesh();
+    ui->mygl->setFocus();
 }

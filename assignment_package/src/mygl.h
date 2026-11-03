@@ -61,6 +61,7 @@ public:
     void resizeGL(int w, int h);
     void paintGL();
     bool loadOBJ(const QString &filename);
+    void refreshMesh();
 
 protected:
     void keyPressEvent(QKeyEvent *e);
